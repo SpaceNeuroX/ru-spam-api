@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ruSpam API Documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #e8e8e8;
+        }
+        header {
+            background-color: #242424;
+            color: #ffffff;
+            padding: 20px 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        main {
+            padding: 20px;
+        }
+        section {
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            padding: 15px;
+            display: block;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        details {
+            margin-bottom: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            padding: 10px;
+        }
+        summary {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #82aaff;
+            cursor: pointer;
+            padding: 5px;
+            background-color: #2c2c2c;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        summary:hover {
+            background-color: #444;
+        }
+        pre code {
+            font-size: 1em;
+        }
+        footer {
+            background-color: #242424;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px 0;
+            width: 100%;
+            border-top: 1px solid #444;
+        }
+        .highlight {
+            color: #ffcb6b;
+        }
+        a {
+            color: #82aaff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Документация по API ruSpam</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Установка</h2>
+            <p>Для начала установите библиотеку ruSpam, используя команду pip:</p>
+            <pre><code class="language-bash">pip install ruSpam</code></pre>
+        </section>
+        <section>
+            <h2>Использование</h2>
+            <p>Пример использования библиотеки для проверки сообщения на спам:</p>
+            <details>
+                <summary>Пример кода для проверки спама (с использованием библиотеки)</summary>
+                <pre><code class="language-python">from ruSpamLib import SpamChecker
+
+user_token = "ВАШ_ТОКЕН"
+
+checker = SpamChecker(user_token=user_token, model_name='spamNS_v9')
+message = "Это пример сообщения для анализа."
+
+result = checker.check_spam(message)
+print(result)</code></pre>
+            </details>
+            <p><span class="highlight">ВАЖНО:</span> Замените <code>"ВАШ_ТОКЕН"</code> на ваш API токен, который вы можете получить у @ruSpamNS_bot в Telegram.</p>
+        </section>
+        <section>
+            <h2>Использование без библиотеки</h2>
+            <p>Пример использования API ruSpam с использованием библиотеки <code>requests</code> для проверки сообщения на спам:</p>
+            <details>
+                <summary>Пример кода для использования API (без библиотеки)</summary>
+                <pre><code class="language-python">
+import requests
+
+class SpamChecker:
+    def __init__(self, user_token, model_name="ruSpam-turbo-test"):
+        self.user_token = user_token
+        self.model_name = model_name
+        self.selected_server = "https://neurospacex-ruspam.hf.space/api/check_spam"
+
+    def check_spam(self, message):
+        if not self.user_token:
+            print("API token is required for authentication.")
+            return {
+                "is_spam": False,
+                "confidence": 0.0,
+                "model_used": self.model_name,
+                "tokens_used": 0,
+                "cost": 0.0,
+                "api_key": None,
+            }
+
+        if not self.selected_server:
+            print("No server initialized.")
+            return {
+                "is_spam": False,
+                "confidence": 0.0,
+                "model_used": self.model_name,
+                "tokens_used": 0,
+                "cost": 0.0,
+                "api_key": self.user_token,
+            }
+
+        headers = {"api-key": self.user_token}
+        data = {"message": message, "model_name": self.model_name}
+
+        try:
+            response = requests.post(self.selected_server, json=data, headers=headers)
+            if response.status_code == 200:
+                result = response.json()
+                print(f"Response received from server: {self.selected_server}")
+                return {
+                    "is_spam": result.get("is_spam", 0) == 1,
+                    "confidence": result.get("confidence", 0.0),
+                    "model_used": result.get("model_used", self.model_name),
+                    "tokens_used": result.get("tokens_used", 0),
+                    "cost": result.get("cost", 0.0),
+                    "api_key": result.get("api_key", self.user_token),
+                }
+            else:
+                print(f"Server at {self.selected_server} failed with status code {response.status_code}.")
+                if response.status_code == 400:
+                    result = response.json()
+                    if "error" in result:
+                        print(f"Error: {result['error']}")
+        except requests.exceptions.RequestException as e:
+            print(f"Network error while connecting to {self.selected_server}: {e}")
+
+        print("Failed to process the request.")
+        return {
+            "is_spam": False,
+            "confidence": 0.0,
+            "model_used": self.model_name,
+            "tokens_used": 0,
+            "cost": 0.0,
+            "api_key": self.user_token,
+        }
+
+# Пример использования
+user_token = "ВАШ_ТОКЕН"
+message = "Это пример сообщения для анализа."
+
+checker = SpamChecker(user_token=user_token, model_name='spamNS_v9')
+result = checker.check_spam(message)
+print(result)
+</code></pre>
+            </details>
+            <p><span class="highlight">ВАЖНО:</span> Замените <code>"ВАШ_ТОКЕН"</code> на ваш API токен, который вы можете получить у <a href="https://t.me/ruSpamNS_bot" target="_blank">@ruSpamNS_bot</a> в Telegram.</p>
+        </section>
+        <section>
+            <h2>Доступные модели</h2>
+            <ul>
+                <li>spamNS_v1</li>
+                <li>spamNS_v6</li>
+                <li>spamNS_v7</li>
+                <li>spamNS_v9</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Результаты</h2>
+            <p>Функция <code>check_spam</code> возвращает результат анализа сообщения. Пример:</p>
+            <details>
+                <summary>Пример результата</summary>
+                <pre><code class="language-json">{
+    "is_spam": false,
+    "confidence": 1.1973621667493717e-06,
+    "model_used": "spamNS_v9",
+    "tokens_used": 8,
+    "cost": 0.0025,
+    "api_key": ""
+}</code></pre>
+            </details>
+        </section>
+        <section>
+            <h2>Как получить токен</h2>
+            <p>Для получения токена отправьте команду <code>/buy_token 200</code> боту в Telegram с ником <a href="https://t.me/ruSpamNS_bot" target="_blank">@ruSpamNS_bot</a>. Укажите сумму, на которую хотите пополнить баланс.</p>
+            <p><span class="highlight">Стоимость:</span> 0.04 рубля за 128 токенов текста.</p>
+        </section>
+        <section>
+            <h2>Контакты</h2>
+            <p>Для дополнительной информации свяжитесь с <a href="https://t.me/NeuroSpaceX" target="_blank">@NeuroSpaceX</a> в Telegram.</p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 ruSpam API Documentation</p>
+    </footer>
+</body>
+</html>
